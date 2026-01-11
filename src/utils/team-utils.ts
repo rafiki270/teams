@@ -70,7 +70,7 @@ export const deriveInboxBaseForUser = (
   return sanitizeLocalPart(user.username) || "team";
 };
 
-export const serializeTeam = (team: { storageLimitBytes: bigint | number | null }) => ({
+export const serializeTeam = (team: { storageLimitBytes?: bigint | number | null }) => ({
   ...team,
   storageLimitBytes:
     team.storageLimitBytes === null || team.storageLimitBytes === undefined

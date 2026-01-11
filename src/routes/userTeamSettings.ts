@@ -6,7 +6,7 @@ import type { TeamRequest } from "../types.js";
 
 export type UserTeamSettingsOptions = {
   prisma: PrismaClient;
-  requireAuth: (request: unknown, reply: unknown) => Promise<unknown> | unknown;
+  requireAuth: (request: TeamRequest, reply: unknown) => Promise<unknown> | unknown;
 };
 
 const SETTING_KEY_PATTERN = /^[a-z0-9][a-z0-9._-]{1,80}$/;

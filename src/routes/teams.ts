@@ -18,12 +18,12 @@ import {
 } from "../utils/team-utils.js";
 import { createTeamGuard } from "../guards/team-guard.js";
 import { createTeamRoleGuard } from "../guards/team-role.js";
-import type { TeamRequest } from "../types.js";
+import type { TeamRecord, TeamRequest, TeamMemberRecord } from "../types.js";
 
 export type TeamRoutesOptions = {
   prisma: PrismaClient;
   inboundEmailDomain: string;
-  requireAuth: (request: unknown, reply: unknown) => Promise<unknown> | unknown;
+  requireAuth: (request: TeamRequest, reply: unknown) => Promise<unknown> | unknown;
 };
 
 const normalizeSlugInput = (value: string) => normalizeTeamSlug(slugify(value));
@@ -51,7 +51,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
       orderBy: { createdAt: "asc" },
     });
     return reply.send({
-      teams: memberships.map((membership) => ({
+      teams: memberships.map((membership: TeamMemberRecord & { team: TeamRecord }) => ({
         ...serializeTeam(membership.team),
         memberRole: membership.role,
       })),
@@ -131,7 +131,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
     const resolvedTimezone =
       timezoneResult.value !== undefined ? timezoneResult.value : geoDefaults.timezone || "UTC";
 
-    const team = await prisma.$transaction(async (tx) => {
+    const team = await prisma.$transaction(async (tx: PrismaClient) => {
       const created = await tx.team.create({
         data: {
           name,
@@ -169,9 +169,10 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
     return reply.status(201).send({ team: serializeTeam(team) });
   });
 
-  app.get("/teams/:teamId", { preHandler: [requireAuth, requireTeam] }, async (request: TeamRequest, reply) =>
-    reply.send({ team: serializeTeam(request.team!) }),
-  );
+  app.get("/teams/:teamId", { preHandler: [requireAuth, requireTeam] }, async (request: TeamRequest, reply) => {
+    const team = request.team as TeamRecord;
+    return reply.send({ team: serializeTeam(team) });
+  });
 
   app.patch(
     "/teams/:teamId",
@@ -257,10 +258,11 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
         }
       }
       if (!Object.keys(data).length) {
-        return reply.send({ team: serializeTeam(request.team!) });
+        const team = request.team as TeamRecord;
+        return reply.send({ team: serializeTeam(team) });
       }
       data.updatedAt = new Date();
-      const updated = await prisma.team.update({ where: { id: request.team!.id }, data });
+      const updated = await prisma.team.update({ where: { id: (request.team as TeamRecord).id }, data });
       return reply.send({ team: serializeTeam(updated) });
     },
   );
@@ -269,8 +271,9 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
     "/teams/:teamId/users",
     { preHandler: [requireAuth, requireTeam, requireTeamRole(["owner", "admin"]) ] },
     async (request: TeamRequest, reply) => {
+      const team = request.team as TeamRecord;
       const members = await prisma.teamMember.findMany({
-        where: { teamId: request.team!.id },
+        where: { teamId: team.id },
         include: {
           user: {
             select: {
@@ -284,7 +287,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
         },
         orderBy: { createdAt: "asc" },
       });
-      return reply.send({ users: members.map((member) => serializeTeamUser(member)) });
+      return reply.send({ users: members.map((member: TeamMemberRecord) => serializeTeamUser(member)) });
     },
   );
 
@@ -302,15 +305,16 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
       if (!user) {
         return reply.status(404).send({ error: "user_not_found" });
       }
+      const team = request.team as TeamRecord;
       const existing = await prisma.teamMember.findUnique({
-        where: { teamId_userId: { teamId: request.team!.id, userId: user.id } },
+        where: { teamId_userId: { teamId: team.id, userId: user.id } },
       });
       if (existing) {
         return reply.status(409).send({ error: "already_member" });
       }
       const now = new Date();
       await prisma.teamMember.create({
-        data: { teamId: request.team!.id, userId: user.id, role: "member", createdAt: now },
+        data: { teamId: team.id, userId: user.id, role: "member", createdAt: now },
       });
       return reply.status(201).send({
         user: {
@@ -342,8 +346,9 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
       if (!targetUserId) {
         return reply.status(400).send({ error: "missing_user_id" });
       }
+      const team = request.team as TeamRecord;
       const targetMember = await prisma.teamMember.findUnique({
-        where: { teamId_userId: { teamId: request.team!.id, userId: targetUserId } },
+        where: { teamId_userId: { teamId: team.id, userId: targetUserId } },
         include: {
           user: {
             select: {
@@ -366,7 +371,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
         return reply.status(403).send({ error: "owner_only" });
       }
       const updated = await prisma.teamMember.update({
-        where: { teamId_userId: { teamId: request.team!.id, userId: targetUserId } },
+        where: { teamId_userId: { teamId: team.id, userId: targetUserId } },
         data: { role: roleResult.value },
         include: {
           user: {
@@ -392,8 +397,9 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
       if (!targetUserId) {
         return reply.status(400).send({ error: "missing_user_id" });
       }
+      const team = request.team as TeamRecord;
       const targetMember = await prisma.teamMember.findUnique({
-        where: { teamId_userId: { teamId: request.team!.id, userId: targetUserId } },
+        where: { teamId_userId: { teamId: team.id, userId: targetUserId } },
         include: {
           user: {
             select: {
@@ -416,7 +422,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
       if (isSelf) {
         const remainingAdminOwners = await prisma.teamMember.count({
           where: {
-            teamId: request.team!.id,
+            teamId: team.id,
             role: { in: ["owner", "admin"] },
             NOT: { userId: targetMember.userId },
           },
@@ -426,23 +432,23 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
         }
       }
 
-      const { promoted } = await prisma.$transaction(async (tx) => {
+      const { promoted } = await prisma.$transaction(async (tx: PrismaClient) => {
         await tx.teamMember.delete({
-          where: { teamId_userId: { teamId: request.team!.id, userId: targetUserId } },
+          where: { teamId_userId: { teamId: team.id, userId: targetUserId } },
         });
         let promotedMember: { userId: string } | null = null;
         if (isSelf && targetMember.role === "owner") {
           const ownerCount = await tx.teamMember.count({
-            where: { teamId: request.team!.id, role: "owner" },
+            where: { teamId: team.id, role: "owner" },
           });
           if (!ownerCount) {
             const nextAdmin = await tx.teamMember.findFirst({
-              where: { teamId: request.team!.id, role: "admin" },
+              where: { teamId: team.id, role: "admin" },
               orderBy: { createdAt: "asc" },
             });
             if (nextAdmin) {
               promotedMember = await tx.teamMember.update({
-                where: { teamId_userId: { teamId: request.team!.id, userId: nextAdmin.userId } },
+                where: { teamId_userId: { teamId: team.id, userId: nextAdmin.userId } },
                 data: { role: "owner" },
                 select: { userId: true },
               });
@@ -460,15 +466,17 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
   );
 
   app.post("/teams/:teamId/select", { preHandler: [requireAuth, requireTeam] }, async (request: TeamRequest, reply) => {
+    const team = request.team as TeamRecord;
     await prisma.user.update({
       where: { id: request.auth?.user?.id },
-      data: { lastActiveTeamId: request.team!.id },
+      data: { lastActiveTeamId: team.id },
     });
-    return reply.send({ activeTeamId: request.team!.id });
+    return reply.send({ activeTeamId: team.id });
   });
 
   app.get("/teams/:teamId/inbox", { preHandler: [requireAuth, requireTeam] }, async (request: TeamRequest, reply) => {
-    const address = `${request.team!.inboxBase}.${request.team!.slug}@${inboundEmailDomain}`;
+    const team = request.team as TeamRecord;
+    const address = `${team.inboxBase}.${team.slug}@${inboundEmailDomain}`;
     return reply.send({ address });
   });
 }
