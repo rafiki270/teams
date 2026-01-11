@@ -126,7 +126,7 @@ describe("team routes integration", () => {
     } as never;
 
     const app = Fastify({ logger: false });
-    const requireAuth = async (request: { auth?: { user?: { id: string } } }) => {
+    const requireAuth = async (request: import("../types.js").TeamRequest) => {
       request.auth = { user: { id: user.id } };
     };
 

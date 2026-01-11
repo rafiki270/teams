@@ -79,13 +79,13 @@ export const serializeTeam = (team: { storageLimitBytes?: bigint | number | null
 });
 
 export const serializeTeamUser = (member: {
-  user: { id: string; email: string | null; fullName: string | null; avatarUrl: string | null; username: string | null };
+  user?: { id?: string; email?: string | null; fullName?: string | null; avatarUrl?: string | null; username?: string | null };
   role: string;
   createdAt: Date;
 }) => {
-  const user = member.user;
+  const user = member.user ?? {};
   return {
-    id: user.id,
+    id: user.id ?? "",
     email: user.email ?? null,
     fullName: user.fullName ?? null,
     name: user.fullName ?? user.username ?? user.email ?? null,
