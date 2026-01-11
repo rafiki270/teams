@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import type { PrismaClient } from "@prisma/client";
 import { parseString } from "../utils/parse.js";
 import { createTeamGuard } from "../guards/team-guard.js";
@@ -6,7 +6,7 @@ import type { TeamRequest } from "../types.js";
 
 export type UserTeamSettingsOptions = {
   prisma: PrismaClient;
-  requireAuth: (request: TeamRequest, reply: unknown) => Promise<unknown> | unknown;
+  requireAuth: (request: TeamRequest, reply: FastifyReply) => Promise<unknown> | unknown;
 };
 
 const SETTING_KEY_PATTERN = /^[a-z0-9][a-z0-9._-]{1,80}$/;

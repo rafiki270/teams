@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import type { PrismaClient } from "@prisma/client";
 import { slugify } from "../utils/strings.js";
 import { resolveCountryCode, resolveGeoipDefaults, resolveTimezoneInput } from "../utils/geoip.js";
@@ -23,7 +23,7 @@ import type { TeamRecord, TeamRequest, TeamMemberRecord } from "../types.js";
 export type TeamRoutesOptions = {
   prisma: PrismaClient;
   inboundEmailDomain: string;
-  requireAuth: (request: TeamRequest, reply: unknown) => Promise<unknown> | unknown;
+  requireAuth: (request: TeamRequest, reply: FastifyReply) => Promise<unknown> | unknown;
 };
 
 const normalizeSlugInput = (value: string) => normalizeTeamSlug(slugify(value));
