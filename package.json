@@ -1,0 +1,26 @@
+{
+  "name": "@rafiki270/teams",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "geoip-lite": "^1.4.10"
+  },
+  "peerDependencies": {
+    "fastify": "^4.0.0",
+    "@prisma/client": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/geoip-lite": "^1.4.4",
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2"
+  }
+}
