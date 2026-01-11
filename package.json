@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run"
   },
   "dependencies": {
     "geoip-lite": "^1.4.10"
@@ -21,6 +22,8 @@
   "devDependencies": {
     "@types/geoip-lite": "^1.4.4",
     "@types/node": "^22.10.1",
-    "typescript": "^5.7.2"
+    "fastify": "^4.29.0",
+    "typescript": "^5.7.2",
+    "vitest": "^1.6.0"
   }
 }
