@@ -20,3 +20,4 @@ export {
   serializeTeam,
   serializeTeamUser,
 } from "./utils/team-utils.js";
+export type { TeamRequest } from "./types.js";

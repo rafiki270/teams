@@ -1,8 +1,9 @@
-import type { FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyReply } from "fastify";
 import type { PrismaClient } from "@prisma/client";
+import type { TeamRequest } from "../types.js";
 
 export const createTeamGuard = (prisma: PrismaClient) => {
-  return async (request: FastifyRequest, reply: FastifyReply) => {
+  return async (request: TeamRequest, reply: FastifyReply) => {
     const headerTeamId = request.headers["x-team-id"];
     const teamId = Array.isArray(headerTeamId) ? headerTeamId[0] : headerTeamId;
 

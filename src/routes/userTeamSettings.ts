@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type { PrismaClient } from "@prisma/client";
 import { parseString } from "../utils/parse.js";
 import { createTeamGuard } from "../guards/team-guard.js";
+import type { TeamRequest } from "../types.js";
 
 export type UserTeamSettingsOptions = {
   prisma: PrismaClient;
@@ -30,7 +31,7 @@ export async function registerUserTeamSettingsRoutes(app: FastifyInstance, optio
   app.get(
     "/user-team-settings/:key",
     { preHandler: [requireAuth, requireTeam] },
-    async (request, reply) => {
+    async (request: TeamRequest, reply) => {
       const key = normalizeKey((request.params as { key?: string }).key);
       if (!key) {
         return reply.status(400).send({ error: "invalid_key" });
@@ -53,7 +54,7 @@ export async function registerUserTeamSettingsRoutes(app: FastifyInstance, optio
   app.put(
     "/user-team-settings/:key",
     { preHandler: [requireAuth, requireTeam] },
-    async (request, reply) => {
+    async (request: TeamRequest, reply) => {
       const key = normalizeKey((request.params as { key?: string }).key);
       if (!key) {
         return reply.status(400).send({ error: "invalid_key" });

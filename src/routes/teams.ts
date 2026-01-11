@@ -18,6 +18,7 @@ import {
 } from "../utils/team-utils.js";
 import { createTeamGuard } from "../guards/team-guard.js";
 import { createTeamRoleGuard } from "../guards/team-role.js";
+import type { TeamRequest } from "../types.js";
 
 export type TeamRoutesOptions = {
   prisma: PrismaClient;
@@ -43,7 +44,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
   const requireTeam = createTeamGuard(prisma);
   const requireTeamRole = createTeamRoleGuard;
 
-  app.get("/teams", { preHandler: requireAuth }, async (request, reply) => {
+  app.get("/teams", { preHandler: requireAuth }, async (request: TeamRequest, reply) => {
     const memberships = await prisma.teamMember.findMany({
       where: { userId: request.auth?.user?.id },
       include: { team: true },
@@ -57,7 +58,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
     });
   });
 
-  app.post("/teams", { preHandler: requireAuth }, async (request, reply) => {
+  app.post("/teams", { preHandler: requireAuth }, async (request: TeamRequest, reply) => {
     const name = String((request.body as { name?: string })?.name || "").trim();
     if (!name) {
       return reply.status(400).send({ error: "missing_name" });
@@ -168,14 +169,14 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
     return reply.status(201).send({ team: serializeTeam(team) });
   });
 
-  app.get("/teams/:teamId", { preHandler: [requireAuth, requireTeam] }, async (request, reply) =>
+  app.get("/teams/:teamId", { preHandler: [requireAuth, requireTeam] }, async (request: TeamRequest, reply) =>
     reply.send({ team: serializeTeam(request.team!) }),
   );
 
   app.patch(
     "/teams/:teamId",
     { preHandler: [requireAuth, requireTeam, requireTeamRole(["owner", "admin"]) ] },
-    async (request, reply) => {
+    async (request: TeamRequest, reply) => {
       const body = request.body as Record<string, unknown>;
       const name = typeof body?.name === "string" ? body.name.trim() : "";
       const slugInput = typeof body?.slug === "string" ? body.slug.trim() : "";
@@ -267,7 +268,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
   app.get(
     "/teams/:teamId/users",
     { preHandler: [requireAuth, requireTeam, requireTeamRole(["owner", "admin"]) ] },
-    async (request, reply) => {
+    async (request: TeamRequest, reply) => {
       const members = await prisma.teamMember.findMany({
         where: { teamId: request.team!.id },
         include: {
@@ -290,7 +291,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
   app.post(
     "/teams/:teamId/users",
     { preHandler: [requireAuth, requireTeam, requireTeamRole(["owner", "admin"]) ] },
-    async (request, reply) => {
+    async (request: TeamRequest, reply) => {
       const email = String((request.body as { email?: string })?.email || "")
         .trim()
         .toLowerCase();
@@ -329,7 +330,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
   app.patch(
     "/teams/:teamId/users/:userId",
     { preHandler: [requireAuth, requireTeam, requireTeamRole(["owner", "admin"]) ] },
-    async (request, reply) => {
+    async (request: TeamRequest, reply) => {
       const roleResult = parseTeamRoleInput((request.body as { role?: string })?.role);
       if ("error" in roleResult) {
         return reply.status(400).send({ error: roleResult.error });
@@ -386,7 +387,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
   app.delete(
     "/teams/:teamId/users/:userId",
     { preHandler: [requireAuth, requireTeam, requireTeamRole(["owner", "admin"]) ] },
-    async (request, reply) => {
+    async (request: TeamRequest, reply) => {
       const targetUserId = String((request.params as { userId?: string }).userId || "").trim();
       if (!targetUserId) {
         return reply.status(400).send({ error: "missing_user_id" });
@@ -458,7 +459,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
     },
   );
 
-  app.post("/teams/:teamId/select", { preHandler: [requireAuth, requireTeam] }, async (request, reply) => {
+  app.post("/teams/:teamId/select", { preHandler: [requireAuth, requireTeam] }, async (request: TeamRequest, reply) => {
     await prisma.user.update({
       where: { id: request.auth?.user?.id },
       data: { lastActiveTeamId: request.team!.id },
@@ -466,7 +467,7 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
     return reply.send({ activeTeamId: request.team!.id });
   });
 
-  app.get("/teams/:teamId/inbox", { preHandler: [requireAuth, requireTeam] }, async (request, reply) => {
+  app.get("/teams/:teamId/inbox", { preHandler: [requireAuth, requireTeam] }, async (request: TeamRequest, reply) => {
     const address = `${request.team!.inboxBase}.${request.team!.slug}@${inboundEmailDomain}`;
     return reply.send({ address });
   });
