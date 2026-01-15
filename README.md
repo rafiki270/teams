@@ -85,6 +85,8 @@ model User {
   userTeamSettings UserTeamSetting[]
 }
 
+Private modules may extend Team with additional fields using Prisma inject blocks.
+
 model Team {
   id                        String              @id @default(uuid())
   name                      String
@@ -92,21 +94,6 @@ model Team {
   vertical                  TeamVertical        @default(regular)
   inboxBase                 String
   createdByUserId           String
-  planName                  String              @default("free")
-  planLimit                 Int                 @default(25)
-  planPriceOverrideOne      Int?
-  planPriceOverrideTeam     Int?
-  stripeCustomerId          String?             @unique
-  stripeSubscriptionId      String?             @unique
-  subscriptionStatus        String?
-  billingInterval           String?
-  billingCurrency           String?             @default("GBP")
-  seatBundleCount           Int                 @default(1)
-  storageAddOnCount         Int                 @default(0)
-  integrationAddOnCount     Int                 @default(0)
-  prioritySupportAddOnCount Int                 @default(0)
-  billingPeriodStart        DateTime?
-  billingPeriodEnd          DateTime?
   defaultCurrency           String?             @default("GBP")
   country                   String?
   timezone                  String?

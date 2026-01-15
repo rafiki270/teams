@@ -69,10 +69,6 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
     if ("error" in currencyResult) {
       return reply.status(400).send({ error: currencyResult.error });
     }
-    const billingCurrencyResult = parseCurrencyInput(body?.billingCurrency);
-    if ("error" in billingCurrencyResult) {
-      return reply.status(400).send({ error: billingCurrencyResult.error });
-    }
     const exportPresetResult = parseExportPreset(body?.defaultExportPreset);
     if ("error" in exportPresetResult) {
       return reply.status(400).send({ error: exportPresetResult.error });
@@ -139,11 +135,6 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
           inboxBase,
           createdByUserId: user.id,
           ...(currencyResult.value !== undefined ? { defaultCurrency: currencyResult.value } : {}),
-          ...(billingCurrencyResult.value !== undefined
-            ? { billingCurrency: billingCurrencyResult.value }
-            : currencyResult.value
-              ? { billingCurrency: currencyResult.value }
-              : {}),
           ...(exportPresetResult.value !== undefined ? { defaultExportPreset: exportPresetResult.value } : {}),
           ...(statsPeriodResult.value !== undefined ? { overviewStatsPeriod: statsPeriodResult.value } : {}),
           ...(vatRegisteredResult.value !== undefined ? { vatRegistered: vatRegisteredResult.value } : {}),
@@ -181,9 +172,6 @@ export async function registerTeamRoutes(app: FastifyInstance, options: TeamRout
       const body = request.body as Record<string, unknown>;
       const name = typeof body?.name === "string" ? body.name.trim() : "";
       const slugInput = typeof body?.slug === "string" ? body.slug.trim() : "";
-      if (body?.billingCurrency !== undefined) {
-        return reply.status(400).send({ error: "billing_currency_locked" });
-      }
       const data: Record<string, unknown> = {};
       if (name) {
         data.name = name;
