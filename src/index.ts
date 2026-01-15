@@ -1,6 +1,7 @@
 export { createTeamGuard } from "./guards/team-guard.js";
 export { createTeamRoleGuard } from "./guards/team-role.js";
 export { registerTeamRoutes } from "./routes/teams.js";
+export { registerTeamInviteRoutes } from "./routes/invites.js";
 export { registerUserTeamSettingsRoutes } from "./routes/userTeamSettings.js";
 export { parseExportPresetInput, defaultExportPreset, exportPresets } from "./utils/exportPresets.js";
 export { resolveCountryCode, resolveGeoipDefaults, resolveTimezoneInput } from "./utils/geoip.js";
